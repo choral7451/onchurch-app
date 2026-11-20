@@ -1,5 +1,4 @@
 import { router } from "expo-router"
-import { StatusBar } from "expo-status-bar"
 import React, { useRef, useState } from "react"
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -35,7 +34,6 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" bounces={false}>
         <View style={[styles.masthead, { paddingTop: insets.top + 56 }]}>
           <View style={styles.cross} accessible={false}>

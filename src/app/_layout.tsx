@@ -40,7 +40,8 @@ function Screens() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
-        <Stack.Screen name="login" options={{ headerShown: false }} />
+        {/* 남색 머리 부분 위라서 상태바 글자를 밝게 */}
+        <Stack.Screen name="login" options={{ headerShown: false, statusBarStyle: "light" }} />
         <Stack.Screen name="signup/index" options={{ title: "교회 찾기" }} />
         <Stack.Screen name="signup/form" options={{ title: "회원가입" }} />
       </Stack.Protected>
