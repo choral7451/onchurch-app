@@ -55,7 +55,7 @@ API 서버를 바꾸려면 `EXPO_PUBLIC_API_URL` 환경변수를 준다 (기본 
    - `ASC_KEY_ID` · `ASC_ISSUER_ID` · `ASC_PRIVATE_KEY` — App Store Connect API 키 (iOS 빌드·업로드·심사 제출)
    - `EXPO_TOKEN` — Android 빌드 (서명 키스토어·versionCode 를 EAS 프로젝트 `@ddoniel/onchurch-app` 에서 가져온다)
    - `PLAY_SERVICE_ACCOUNT_JSON` — Play 업로드·승격 서비스 계정 키
-2. **App Store Connect** — 번들 ID `kr.co.everychurch.app` 로 앱을 만든다. 앱 ID(숫자)가 나오면 마스터 페이지 "앱 버전" iOS 스토어 주소에 `https://apps.apple.com/kr/app/id<앱 ID>` 를 넣는다.
+2. **App Store Connect** — 앱 등록 완료 (번들 ID `kr.co.everychurch.app`, Apple ID `6837218463`). 마스터 페이지 "앱 버전" iOS 스토어 주소는 `https://apps.apple.com/kr/app/id6837218463`.
 3. **Google Play Console** — 패키지 `kr.co.everychurch.app` 로 앱을 만들고 서비스 계정에 권한을 준다. 첫 `.aab` 는 콘솔에서 직접 올려야 API 업로드가 열린다.
 4. **Android 서명 키** — 첫 빌드 전에 `npx eas-cli credentials -p android` 로 EAS 에 키스토어를 만든다 (CI 는 비대화형이라 새로 만들지 못한다).
 5. 스토어 등록정보는 `store/ko/*.txt` (name · subtitle · description · keywords · promotional_text · release_notes) 가 있으면 심사 제출 때 같이 올라간다.
