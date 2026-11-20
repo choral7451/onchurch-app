@@ -97,6 +97,10 @@ export const api = {
     return toTokens(await post<AuthTokens>("/onchurch/auths/sign-up", { ...params, marketingConsent: false }))
   },
 
+  /** 비밀번호 재설정 — 아이디와, 문자 인증을 마친 가입 연락처가 맞아야 한다 */
+  resetPassword: (loginId: string, phone: string, newPassword: string) =>
+    put<null>("/onchurch/auths/reset-password", { loginId, phone, newPassword, churchSlug: null }),
+
   checkAppVersion: (platform: "ios" | "android", version: string) =>
     request<AppVersionCheck>(`/onchurch/app/version?platform=${platform}&version=${encodeURIComponent(version)}`),
 }

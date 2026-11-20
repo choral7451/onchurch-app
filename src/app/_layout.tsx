@@ -42,6 +42,7 @@ function Screens() {
       <Stack.Protected guard={!session}>
         {/* 남색 머리 부분 위라서 상태바 글자를 밝게 */}
         <Stack.Screen name="login" options={{ headerShown: false, statusBarStyle: "light" }} />
+        <Stack.Screen name="reset-password" options={{ title: "비밀번호 찾기" }} />
         <Stack.Screen name="signup/index" options={{ title: "교회 찾기" }} />
         <Stack.Screen name="signup/form" options={{ title: "회원가입" }} />
       </Stack.Protected>

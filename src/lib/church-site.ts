@@ -21,9 +21,10 @@ export type SiteMessage = { type: "tokens"; tokens: AuthTokens } | { type: "sign
  * 교회 홈페이지가 열리기 전에 웹뷰에서 실행되는 스크립트.
  * - 웹(onchurch-client lib/api-client.ts)은 로그인 토큰을 쿠키(onchurch.*)에 둔다. 쿠키가 없으면 앱이 가진 토큰을 같은 방식으로 심는다.
  * - 웹이 토큰을 갱신하거나 로그아웃하면('onchurch-auth-change' 이벤트) 앱에 알려 준다.
+ * - 둘러보는 중(tokens 가 null)이면 쿠키를 심지 않는다. 웹에서 로그인하면 그 토큰을 앱에 알려 준다.
  * 교회 호스트가 아닌 페이지에서는 아무것도 하지 않는다 — 토큰이 다른 사이트로 나가지 않게.
  */
-export function buildSiteBridgeScript(church: Church, tokens: AuthTokens): string {
+export function buildSiteBridgeScript(church: Church, tokens: AuthTokens | null): string {
   const config = JSON.stringify({ slug: church.slug, customDomain: church.customDomain, roots: SITE_ROOT_DOMAINS, tokens })
   return `(function () {
   var config = ${config};
@@ -58,20 +59,25 @@ export function buildSiteBridgeScript(church: Church, tokens: AuthTokens): strin
 
   // 쿠키가 없거나, 앱이 가진 토큰이 더 새것이면(방금 로그인) 앱의 토큰을 심는다.
   // 웹이 갱신한 토큰은 만료 시각이 더 뒤라서 덮어쓰지 않는다.
-  var cookieExpiry = Date.parse(read("onchurch.refreshTokenExpiresIn") || "");
-  var appExpiry = Date.parse(config.tokens.refreshTokenExpiresIn);
-  if (!read("onchurch.accessToken") || !(cookieExpiry >= appExpiry)) {
-    for (var k = 0; k < KEYS.length; k++) write("onchurch." + KEYS[k], config.tokens[KEYS[k]]);
-    write("onchurch.sessionChurch", config.slug);
+  if (config.tokens) {
+    var cookieExpiry = Date.parse(read("onchurch.refreshTokenExpiresIn") || "");
+    var appExpiry = Date.parse(config.tokens.refreshTokenExpiresIn);
+    if (!read("onchurch.accessToken") || !(cookieExpiry >= appExpiry)) {
+      for (var k = 0; k < KEYS.length; k++) write("onchurch." + KEYS[k], config.tokens[KEYS[k]]);
+      write("onchurch.sessionChurch", config.slug);
+    }
   }
 
+  // 둘러보는 중에는 로그인한 적이 없으므로 "로그아웃됨"을 알리지 않는다 — 웹에서 로그인한 뒤에만 알린다.
+  var signedIn = !!config.tokens;
   function report() {
     var tokens = {};
     for (var k = 0; k < KEYS.length; k++) {
       var value = read("onchurch." + KEYS[k]);
-      if (!value) { post({ type: "signed-out" }); return; }
+      if (!value) { if (signedIn) post({ type: "signed-out" }); return; }
       tokens[KEYS[k]] = value;
     }
+    signedIn = true;
     post({ type: "tokens", tokens: tokens });
   }
   window.addEventListener("onchurch-auth-change", report);

@@ -1,15 +1,18 @@
-import { router } from "expo-router"
+import { router, useLocalSearchParams } from "expo-router"
 import React, { useEffect, useRef, useState } from "react"
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 
 import { ChurchLogo } from "@/components/church-logo"
 import { colors, radius } from "@/constants/theme"
 import { api, ApiError, ChurchSearchItem } from "@/lib/api"
+import { useSession } from "@/lib/session"
 
 type Status = "idle" | "loading" | "done" | "error"
 
-/** 회원가입 1단계 — 교회 이름으로 찾아 가입할 교회를 고른다 */
+/** 교회 이름으로 찾아 고른다 — 회원가입 1단계이거나(기본), 로그인 없이 둘러볼 교회 고르기(mode=browse) */
 export default function ChurchSearchScreen() {
+  const { mode } = useLocalSearchParams<{ mode?: string }>()
+  const { signIn } = useSession()
   const [keyword, setKeyword] = useState("")
   const [status, setStatus] = useState<Status>("idle")
   const [churches, setChurches] = useState<ChurchSearchItem[]>([])
@@ -39,11 +42,15 @@ export default function ChurchSearchScreen() {
     return () => clearTimeout(timer)
   }, [query])
 
-  const select = (church: ChurchSearchItem) =>
+  const select = (church: ChurchSearchItem) => {
+    const picked = { slug: church.slug, name: church.name, logoUrl: church.logoUrl, customDomain: church.customDomain }
+    // 둘러보기 — 토큰 없이 그 교회 화면으로 들어간다 (_layout 의 가드가 화면을 바꾼다)
+    if (mode === "browse") return void signIn({ church: picked, tokens: null })
     router.push({
       pathname: "/signup/form",
       params: { slug: church.slug, name: church.name, logoUrl: church.logoUrl ?? "", customDomain: church.customDomain ?? "" },
     })
+  }
 
   const showResults = query.length > 0 && status === "done"
 

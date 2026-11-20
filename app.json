@@ -24,6 +24,9 @@
           "ko"
         ],
         "CFBundleDisplayName": "온교회",
+        "NSCameraUsageDescription": "게시판에 올릴 사진을 촬영할 때 카메라를 사용합니다.",
+        "NSPhotoLibraryUsageDescription": "게시판에 올릴 사진을 고를 때 사진 보관함을 사용합니다.",
+        "NSPhotoLibraryAddUsageDescription": "교회 사진을 기기에 저장할 때 사진 보관함을 사용합니다.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },

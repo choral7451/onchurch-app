@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { ActivityIndicator, BackHandler, Linking, Platform, StyleSheet, Text, View } from "react-native"
+import { ActivityIndicator, BackHandler, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { WebView, WebViewMessageEvent } from "react-native-webview"
 import type { ShouldStartLoadRequest, WebViewNavigation } from "react-native-webview/lib/WebViewTypes"
@@ -15,7 +15,8 @@ const hostOf = (url: string): string | null => {
 }
 
 /**
- * 로그인한 교회의 홈페이지를 그대로 보여준다 (웹의 성도 로그인 상태로).
+ * 교회의 홈페이지를 그대로 보여준다 (로그인했으면 웹의 성도 로그인 상태로).
+ * 로그인 없이 둘러보는 중이면 아래에 로그인 안내 띠를 보여준다.
  * 교회 사이트 밖의 주소는 기기 브라우저로 열고, 웹에서 로그아웃하면 앱도 로그인 화면으로 돌아간다.
  */
 export function ChurchWebView({ session }: { session: Session }) {
@@ -24,6 +25,8 @@ export function ChurchWebView({ session }: { session: Session }) {
   const webView = useRef<any>(null)
   const canGoBack = useRef(false)
   const [failed, setFailed] = useState(false)
+  // 둘러보는 중 — 웹에서 로그인하면 false 가 된다
+  const [guest, setGuest] = useState(!session.tokens)
 
   const { church } = session
   const uri = churchSiteUrl(church)
@@ -52,7 +55,10 @@ export function ChurchWebView({ session }: { session: Session }) {
         return
       }
       if (message.type === "signed-out") signOut()
-      else if (message.type === "tokens") rememberTokens(message.tokens)
+      else if (message.type === "tokens") {
+        setGuest(false)
+        rememberTokens(message.tokens)
+      }
     },
     [church, rememberTokens, signOut],
   )
@@ -77,7 +83,7 @@ export function ChurchWebView({ session }: { session: Session }) {
         <Text style={styles.failedTitle}>{church.name} 페이지를 열지 못했습니다</Text>
         <Text style={styles.failedText}>인터넷 연결을 확인한 뒤 다시 시도해주세요.</Text>
         <Button title="다시 시도" onPress={() => setFailed(false)} style={styles.failedButton} />
-        <Button title="로그아웃" variant="secondary" onPress={signOut} />
+        <Button title={guest ? "처음으로" : "로그아웃"} variant="secondary" onPress={signOut} />
       </SafeAreaView>
     )
   }
@@ -112,6 +118,16 @@ export function ChurchWebView({ session }: { session: Session }) {
         )}
         style={styles.webView}
       />
+      {guest && (
+        <SafeAreaView edges={["bottom"]} style={styles.guestBar}>
+          <Text style={styles.guestText} numberOfLines={1}>
+            {church.name} 둘러보는 중
+          </Text>
+          <Pressable accessibilityRole="button" hitSlop={10} onPress={signOut} style={styles.guestButton}>
+            <Text style={styles.guestButtonText}>로그인 · 회원가입</Text>
+          </Pressable>
+        </SafeAreaView>
+      )}
     </SafeAreaView>
   )
 }
@@ -120,6 +136,19 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   webView: { flex: 1, backgroundColor: colors.surface },
   loading: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center", backgroundColor: colors.surface },
+  guestBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 10,
+    backgroundColor: colors.primary,
+  },
+  guestText: { flex: 1, fontSize: 14, color: colors.onPrimaryMuted },
+  guestButton: { paddingVertical: 6 },
+  guestButtonText: { fontSize: 14, fontWeight: "600", color: colors.surface },
   failed: { flex: 1, justifyContent: "center", paddingHorizontal: 28, gap: 10, backgroundColor: colors.surface },
   failedTitle: { fontSize: 20, fontWeight: "700", color: colors.ink },
   failedText: { fontSize: 15, lineHeight: 22, color: colors.ink2 },

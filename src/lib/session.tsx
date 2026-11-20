@@ -4,11 +4,11 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import type { AuthTokens, Church } from "@/lib/api"
 
 /**
- * 로그인 세션 = 들어갈 교회 + 토큰.
+ * 세션 = 들어갈 교회 + 토큰. 로그인 없이 둘러보는 중이면 토큰이 없다(null).
  * 교회 화면은 웹뷰(교회 홈페이지)라서 로그인 상태의 주인은 웹뷰의 쿠키다. 앱은 토큰을 웹뷰에 심어 주고,
  * 웹이 토큰을 갱신하면 그 값을 다시 받아 보관한다(church-webview.tsx) — 쿠키가 지워져도 다시 심을 수 있도록.
  */
-export type Session = { church: Church; tokens: AuthTokens }
+export type Session = { church: Church; tokens: AuthTokens | null }
 
 const STORAGE_KEY = "onchurch.session"
 
@@ -50,7 +50,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const rememberTokens = useCallback(
     (tokens: AuthTokens) => {
-      if (!session || tokens.refreshToken === session.tokens.refreshToken) return
+      if (!session || tokens.refreshToken === session.tokens?.refreshToken) return
       // state 는 그대로 둔다 — 바꾸면 웹뷰가 새 토큰으로 다시 만들어진다
       SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify({ church: session.church, tokens })).catch(() => {})
     },

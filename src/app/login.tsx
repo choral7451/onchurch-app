@@ -73,12 +73,19 @@ export default function LoginScreen() {
           <ErrorNotice message={errorMessage} />
           <Button title="로그인" onPress={submit} disabled={!canSubmit} loading={submitting} />
 
-          <View style={styles.signup}>
-            <Text style={styles.signupText}>처음이신가요?</Text>
+          <View style={styles.links}>
+            <Pressable accessibilityRole="link" hitSlop={12} onPress={() => router.push("/reset-password")}>
+              <Text style={styles.linkText}>비밀번호 찾기</Text>
+            </Pressable>
+            <View style={styles.linkDivider} />
             <Pressable accessibilityRole="link" hitSlop={12} onPress={() => router.push("/signup")}>
-              <Text style={styles.signupLink}>교회 찾아 회원가입</Text>
+              <Text style={styles.linkText}>회원가입</Text>
             </Pressable>
           </View>
+
+          <Pressable accessibilityRole="link" hitSlop={10} onPress={() => router.push({ pathname: "/signup", params: { mode: "browse" } })} style={styles.browse}>
+            <Text style={styles.browseText}>로그인 없이 교회 둘러보기</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -104,7 +111,9 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     gap: 18,
   },
-  signup: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 10 },
-  signupText: { fontSize: 15, color: colors.muted },
-  signupLink: { fontSize: 15, fontWeight: "700", color: colors.primary, textDecorationLine: "underline" },
+  links: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 10 },
+  linkText: { fontSize: 15, color: colors.ink2 },
+  browse: { alignSelf: "center", marginTop: 6 },
+  browseText: { fontSize: 14, color: colors.muted, textDecorationLine: "underline" },
+  linkDivider: { width: 1, height: 12, backgroundColor: colors.line },
 })
