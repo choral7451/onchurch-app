@@ -15,6 +15,10 @@ on:
         description: '테스트 설치용 APK 도 같이 만들기 (preview 프로필, Play 에는 안 올림)'
         type: boolean
         default: false
+      draft:
+        description: '내부 테스트에 초안(draft)으로 올리기 — 앱이 아직 Play 에 한 번도 게시되지 않았으면 초안만 받아준다'
+        type: boolean
+        default: false
 
 concurrency:
   group: android-build
@@ -83,6 +87,7 @@ jobs:
         if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
         env:
           FASTLANE_SKIP_UPDATE_CHECK: '1'
+          RELEASE_STATUS: ${{ inputs.draft && 'draft' || 'completed' }}
         run: |
           gem install fastlane --no-document
           mkdir -p fastlane
@@ -94,7 +99,7 @@ jobs:
               json_key_data: ENV['PLAY_SERVICE_ACCOUNT_JSON'],
               aab: './onchurch.aab',
               track: 'internal',
-              release_status: 'completed',
+              release_status: ENV['RELEASE_STATUS'],
               skip_upload_metadata: true,
               skip_upload_changelogs: true,
               skip_upload_images: true,
