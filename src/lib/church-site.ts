@@ -59,6 +59,20 @@ export function buildSiteBridgeScript(church: Church, tokens: AuthTokens | null)
 
   // 쿠키가 없거나, 앱이 가진 토큰이 더 새것이면(방금 로그인) 앱의 토큰을 심는다.
   // 웹이 갱신한 토큰은 만료 시각이 더 뒤라서 덮어쓰지 않는다.
+  // 둘러보기를 시작할 때는 이전 로그인이 남긴 쿠키를 지운다 — 남아 있으면 로그인한 것처럼 보인다.
+  // 웹뷰를 새로 열 때 한 번만 지운다(sessionStorage 표시). 그 뒤 웹에서 로그인한 쿠키는 건드리지 않는다.
+  if (!config.tokens) {
+    var cleared = false;
+    try { cleared = !!sessionStorage.getItem("onchurch.guestCleared"); sessionStorage.setItem("onchurch.guestCleared", "1"); } catch (e) {}
+    if (!cleared) {
+      var names = KEYS.concat(["sessionChurch"]);
+      for (var n = 0; n < names.length; n++) {
+        document.cookie = "onchurch." + names[n] + "=; Path=/; Max-Age=0; SameSite=Lax";
+        if (cookieDomain) document.cookie = "onchurch." + names[n] + "=; Path=/; Max-Age=0; SameSite=Lax; Domain=" + cookieDomain;
+      }
+    }
+  }
+
   if (config.tokens) {
     var cookieExpiry = Date.parse(read("onchurch.refreshTokenExpiresIn") || "");
     var appExpiry = Date.parse(config.tokens.refreshTokenExpiresIn);
