@@ -98,6 +98,7 @@ export function ChurchWebView({ session }: { session: Session }) {
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
         domStorageEnabled
+        decelerationRate="normal"
         allowsBackForwardNavigationGestures
         allowsInlineMediaPlayback
         allowsFullscreenVideo
