@@ -54,7 +54,8 @@ export function ChurchWebView({ session }: { session: Session }) {
       } catch {
         return
       }
-      if (message.type === "signed-out") signOut()
+      // 둘러보는 중에 웹의 "로그인"을 누름 — 웹 로그인 페이지 대신 앱의 로그인 화면으로 (세션을 비우면 _layout 의 가드가 바꾼다)
+      if (message.type === "signed-out" || message.type === "login-requested") signOut()
       else if (message.type === "tokens") {
         setGuest(false)
         rememberTokens(message.tokens)

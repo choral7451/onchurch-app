@@ -15,13 +15,13 @@ export function isChurchHost(church: Church, hostname: string): boolean {
   return SITE_ROOT_DOMAINS.some(root => host === `${church.slug}.${root}`)
 }
 
-export type SiteMessage = { type: "tokens"; tokens: AuthTokens } | { type: "signed-out" }
+export type SiteMessage = { type: "tokens"; tokens: AuthTokens } | { type: "signed-out" } | { type: "login-requested" }
 
 /**
  * 교회 홈페이지가 열리기 전에 웹뷰에서 실행되는 스크립트.
  * - 웹(onchurch-client lib/api-client.ts)은 로그인 토큰을 쿠키(onchurch.*)에 둔다. 쿠키가 없으면 앱이 가진 토큰을 같은 방식으로 심는다.
  * - 웹이 토큰을 갱신하거나 로그아웃하면('onchurch-auth-change' 이벤트) 앱에 알려 준다.
- * - 둘러보는 중(tokens 가 null)이면 쿠키를 심지 않는다. 웹에서 로그인하면 그 토큰을 앱에 알려 준다.
+ * - 둘러보는 중(tokens 가 null)이면 쿠키를 심지 않는다. 웹의 로그인 페이지로 가려 하면 그 대신 앱의 로그인 화면을 열도록 알려 준다.
  * 교회 호스트가 아닌 페이지에서는 아무것도 하지 않는다 — 토큰이 다른 사이트로 나가지 않게.
  */
 export function buildSiteBridgeScript(church: Church, tokens: AuthTokens | null): string {
@@ -96,6 +96,34 @@ export function buildSiteBridgeScript(church: Church, tokens: AuthTokens | null)
   }
   window.addEventListener("onchurch-auth-change", report);
   report();
+
+  // 둘러보는 중에 웹의 로그인 페이지(/login, /{slug}/login)로 가려 하면 — 헤더의 "로그인", 로그인이 필요한 페이지의 안내 등 —
+  // 웹 페이지를 여는 대신 앱의 로그인 화면으로 보낸다.
+  function isLoginUrl(url) {
+    try {
+      var target = new URL(String(url), location.href);
+      return target.hostname.toLowerCase() === host && /(^|\/)login\/?$/.test(target.pathname);
+    } catch (e) { return false; }
+  }
+  function requestLogin() { post({ type: "login-requested" }); }
+  if (!signedIn && isLoginUrl(location.href)) requestLogin();
+  // 링크를 누른 순간 — 웹이 페이지를 불러오기 전에 가로챈다
+  document.addEventListener("click", function (event) {
+    if (signedIn) return;
+    var link = event.target && event.target.closest ? event.target.closest("a[href]") : null;
+    if (!link || !isLoginUrl(link.href)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    requestLogin();
+  }, true);
+  // 링크가 아닌 이동(router.push 등)
+  ["pushState", "replaceState"].forEach(function (method) {
+    var original = history[method];
+    history[method] = function (state, title, url) {
+      if (!signedIn && url != null && isLoginUrl(url)) { requestLogin(); return; }
+      return original.apply(this, arguments);
+    };
+  });
 })();
 true;`
 }
