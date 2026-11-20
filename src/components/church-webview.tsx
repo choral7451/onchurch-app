@@ -89,7 +89,9 @@ export function ChurchWebView({ session }: { session: Session }) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    // Android 는 화면이 시스템 내비게이션 바 밑까지 그려져서, 웹의 아래쪽(메뉴 맨 아래 등)이 가려지지 않게 아래 여백을 둔다.
+    // 둘러보는 중에는 아래의 안내 띠가 그 여백을 대신 채운다.
+    <SafeAreaView style={styles.container} edges={Platform.OS === "android" && !guest ? ["top", "bottom"] : ["top"]}>
       <WebView
         ref={webView}
         source={{ uri }}
