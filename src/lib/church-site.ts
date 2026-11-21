@@ -102,7 +102,7 @@ export function buildSiteBridgeScript(church: Church, tokens: AuthTokens | null)
   function isLoginUrl(url) {
     try {
       var target = new URL(String(url), location.href);
-      return target.hostname.toLowerCase() === host && /(^|\/)login\/?$/.test(target.pathname);
+      return target.hostname.toLowerCase() === host && /(^|[/])login[/]?$/.test(target.pathname);
     } catch (e) { return false; }
   }
   function requestLogin() { post({ type: "login-requested" }); }
