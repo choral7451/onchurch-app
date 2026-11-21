@@ -107,7 +107,8 @@ export function ChurchWebView({ session }: { session: Session }) {
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
         domStorageEnabled
-        decelerationRate="normal"
+        // iOS 전용 값. Android 에 문자열로 넘기면 숫자(Double) prop 이라 화면을 만들다 앱이 종료된다 (String cannot be cast to Double)
+        {...(Platform.OS === "ios" ? { decelerationRate: "normal" as const } : null)}
         allowsBackForwardNavigationGestures
         allowsInlineMediaPlayback
         allowsFullscreenVideo

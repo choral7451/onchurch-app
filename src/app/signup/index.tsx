@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router"
 import React, { useEffect, useRef, useState } from "react"
-import { ActivityIndicator, FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 
 import { ChurchLogo } from "@/components/church-logo"
 import { colors, radius } from "@/constants/theme"
@@ -45,14 +45,7 @@ export default function ChurchSearchScreen() {
   const select = (church: ChurchSearchItem) => {
     const picked = { slug: church.slug, name: church.name, logoUrl: church.logoUrl, customDomain: church.customDomain }
     // 둘러보기 — 토큰 없이 그 교회 화면으로 들어간다 (_layout 의 가드가 화면을 바꾼다)
-    if (mode === "browse") {
-      // 키보드와 이 화면을 먼저 닫고(로그인 화면만 남긴 뒤) 교회 화면으로 바꾼다 —
-      // Android 에서 검색 화면이 떠 있는 채로 화면 묶음이 통째로 바뀌면 앱이 종료됐다.
-      Keyboard.dismiss()
-      router.dismissAll()
-      setTimeout(() => void signIn({ church: picked, tokens: null }), 400)
-      return
-    }
+    if (mode === "browse") return void signIn({ church: picked, tokens: null })
     router.push({
       pathname: "/signup/form",
       params: { slug: church.slug, name: church.name, logoUrl: church.logoUrl ?? "", customDomain: church.customDomain ?? "" },
