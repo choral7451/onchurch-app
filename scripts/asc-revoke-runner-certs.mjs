@@ -3,10 +3,13 @@
 // 이 러너 키체인에 있는 Apple Development 인증서의 시리얼과 같은 것만 지우므로
 // 같은 팀을 쓰는 다른 앱(아트인포·온기)의 빌드가 동시에 돌아도 그쪽 인증서는 건드리지 않는다. 배포 인증서는 대상이 아니다.
 // 실행: node scripts/asc-revoke-runner-certs.mjs   (ASC_KEY_ID · ASC_ISSUER_ID · ASC_PRIVATE_KEY 환경변수 필요)
+import { Buffer } from "node:buffer"
 import { execFileSync } from "node:child_process"
 import { createPrivateKey, sign, X509Certificate } from "node:crypto"
 
-const { ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY } = process.env
+const ASC_KEY_ID = process.env.ASC_KEY_ID
+const ASC_ISSUER_ID = process.env.ASC_ISSUER_ID
+const ASC_PRIVATE_KEY = process.env.ASC_PRIVATE_KEY
 if (!ASC_KEY_ID || !ASC_ISSUER_ID || !ASC_PRIVATE_KEY) {
   console.log("ASC 키가 없어 인증서 정리를 건너뜁니다")
   process.exit(0)
