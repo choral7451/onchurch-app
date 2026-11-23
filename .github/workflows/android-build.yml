@@ -109,6 +109,7 @@ jobs:
               package_name: 'kr.co.everychurch.app',
               json_key_data: ENV['PLAY_SERVICE_ACCOUNT_JSON'],
               aab: './onchurch.aab',
+              skip_upload_apk: true,
               track: 'internal',
               release_status: ENV['RELEASE_STATUS'],
               skip_upload_metadata: true,
