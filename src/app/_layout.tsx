@@ -8,6 +8,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context"
 import { UpdateGate } from "@/components/update-gate"
 import { colors } from "@/constants/theme"
 import { SessionProvider, useSession } from "@/lib/session"
+import { usePushNotifications } from "@/lib/use-push-notifications"
 
 SplashScreen.preventAutoHideAsync()
 
@@ -17,6 +18,7 @@ SplashScreen.preventAutoHideAsync()
  */
 function Screens() {
   const { isReady, session } = useSession()
+  usePushNotifications()
 
   useEffect(() => {
     if (isReady) SplashScreen.hideAsync()

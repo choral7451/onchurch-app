@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store"
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 
 import type { AuthTokens, Church } from "@/lib/api"
+import { unregisterCurrentPushToken } from "@/lib/push"
 
 /**
  * 세션 = 들어갈 교회 + 토큰. 로그인 없이 둘러보는 중이면 토큰이 없다(null).
@@ -58,6 +59,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   )
 
   const signOut = useCallback(async () => {
+    // 로그아웃한 기기로는 그 계정의 알림이 오지 않게 이 기기 토큰을 해제한다
+    await unregisterCurrentPushToken()
     await SecureStore.deleteItemAsync(STORAGE_KEY).catch(() => {})
     setSession(null)
   }, [])

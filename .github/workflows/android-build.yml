@@ -53,6 +53,17 @@ jobs:
       - name: Check EAS login
         run: eas whoami
 
+      # Firebase 설정 — 시크릿이 비어 있으면 푸시만 빠진 채 빌드된다 (app.config.js 가 파일 있을 때만 넣는다)
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > google-services.json
+          else
+            echo "::warning::GOOGLE_SERVICES_JSON 시크릿이 없어 Android 푸시 없이 빌드합니다"
+          fi
+
       - name: Build (local, production)
         run: eas build --platform android --profile production --local --non-interactive --output ./onchurch.aab
 

@@ -15,7 +15,14 @@ export function isChurchHost(church: Church, hostname: string): boolean {
   return SITE_ROOT_DOMAINS.some(root => host === `${church.slug}.${root}`)
 }
 
-export type SiteMessage = { type: "tokens"; tokens: AuthTokens } | { type: "signed-out" } | { type: "login-requested" }
+export type SiteMessage =
+  | { type: "tokens"; tokens: AuthTokens }
+  | { type: "signed-out" }
+  | { type: "login-requested" }
+  // 마이페이지 알림 설정 — 기기 알림 상태 요청, 알림 켬(권한 요청), 기기 설정 열기. 앱은 'onchurch-push-status' 이벤트로 답한다
+  | { type: "push-status" }
+  | { type: "push-enable" }
+  | { type: "open-settings" }
 
 /**
  * 교회 홈페이지가 열리기 전에 웹뷰에서 실행되는 스크립트.

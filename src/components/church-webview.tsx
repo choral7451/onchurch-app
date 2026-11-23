@@ -7,6 +7,7 @@ import type { ShouldStartLoadRequest, WebViewNavigation } from "react-native-web
 import { Button } from "@/components/ui"
 import { colors } from "@/constants/theme"
 import { buildSiteBridgeScript, churchSiteUrl, isChurchHost, SiteMessage } from "@/lib/church-site"
+import { getPushStatus, PushStatus, subscribePushPath, syncPushToken, takePendingPushPath } from "@/lib/push"
 import { Session, useSession } from "@/lib/session"
 
 const hostOf = (url: string): string | null => {
@@ -29,7 +30,15 @@ export function ChurchWebView({ session }: { session: Session }) {
   const [guest, setGuest] = useState(!session.tokens)
 
   const { church } = session
-  const uri = churchSiteUrl(church)
+  const siteUrl = churchSiteUrl(church)
+  // 알림을 탭해 앱이 켜졌으면 그 화면부터 연다
+  const [uri, setUri] = useState(() => {
+    const path = takePendingPushPath()
+    return path ? siteUrl + path : siteUrl
+  })
+  const loaded = useRef(false)
+  // 웹뷰가 알려 준 최신 액세스 토큰 — 푸시 토큰 등록에 쓴다 (앱이 저장한 토큰은 만료됐을 수 있다)
+  const accessToken = useRef<string | null>(null)
   const bridgeScript = useMemo(() => buildSiteBridgeScript(session.church, session.tokens), [session])
 
   // Android 뒤로 가기 — 웹 페이지를 먼저 뒤로 보낸다
@@ -41,6 +50,24 @@ export function ChurchWebView({ session }: { session: Session }) {
       return true
     })
     return () => subscription.remove()
+  }, [])
+
+  // 앱이 켜져 있을 때 알림을 탭함 — 보고 있던 화면에서 알림의 화면으로 이동
+  useEffect(
+    () =>
+      subscribePushPath(path => {
+        const target = siteUrl + path
+        if (loaded.current) webView.current?.injectJavaScript(`location.assign(${JSON.stringify(target)});true;`)
+        else setUri(target)
+      }),
+    [siteUrl],
+  )
+
+  // 웹(마이페이지 알림 설정)에 이 기기의 알림 상태를 알려 준다
+  const reportPushStatus = useCallback((status: PushStatus) => {
+    webView.current?.injectJavaScript(
+      `window.dispatchEvent(new CustomEvent("onchurch-push-status", { detail: ${JSON.stringify(status)} }));true;`,
+    )
   }, [])
 
   const onMessage = useCallback(
@@ -59,9 +86,23 @@ export function ChurchWebView({ session }: { session: Session }) {
       else if (message.type === "tokens") {
         setGuest(false)
         rememberTokens(message.tokens)
+        // 로그인 상태가 확인되면 이 기기를 알림 대상으로 등록 (처음 한 번 권한을 묻는다)
+        if (accessToken.current !== message.tokens.accessToken) {
+          accessToken.current = message.tokens.accessToken
+          void syncPushToken(message.tokens.accessToken).then(reportPushStatus)
+        }
+      } else if (message.type === "push-status") {
+        // 마이페이지가 열림 — 권한 팝업 없이 지금 상태만
+        if (accessToken.current) void syncPushToken(accessToken.current, false).then(reportPushStatus)
+        else reportPushStatus(getPushStatus())
+      } else if (message.type === "push-enable") {
+        // 마이페이지에서 알림을 켬 — 아직 묻지 않았으면 권한을 묻는다
+        if (accessToken.current) void syncPushToken(accessToken.current).then(reportPushStatus)
+      } else if (message.type === "open-settings") {
+        Linking.openSettings().catch(() => {})
       }
     },
-    [church, rememberTokens, signOut],
+    [church, rememberTokens, signOut, reportPushStatus],
   )
 
   const onShouldStartLoad = useCallback(
@@ -102,6 +143,9 @@ export function ChurchWebView({ session }: { session: Session }) {
         onShouldStartLoadWithRequest={onShouldStartLoad}
         onNavigationStateChange={(state: WebViewNavigation): void => {
           canGoBack.current = state.canGoBack
+        }}
+        onLoadEnd={() => {
+          loaded.current = true
         }}
         onError={() => setFailed(true)}
         sharedCookiesEnabled

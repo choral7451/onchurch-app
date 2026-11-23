@@ -101,6 +101,17 @@ export const api = {
   resetPassword: (loginId: string, phone: string, newPassword: string) =>
     put<null>("/onchurch/auths/reset-password", { loginId, phone, newPassword, churchSlug: null }),
 
+  /** 이 기기의 Expo Push Token 등록 — 웹뷰가 알려 준 최신 액세스 토큰으로 (서버가 그 계정의 기기로 기록) */
+  registerPushToken: (token: string, platform: "ios" | "android", accessToken: string) =>
+    request<null>("/onchurch/push/tokens", {
+      method: "POST",
+      body: JSON.stringify({ token, platform }),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+
+  /** 로그아웃 — 이 기기 토큰만 해제 (웹이 먼저 로그아웃해 액세스 토큰이 없을 수 있어 토큰만 보낸다) */
+  unregisterPushToken: (token: string) => request<null>("/onchurch/push/tokens", { method: "DELETE", body: JSON.stringify({ token }) }),
+
   checkAppVersion: (platform: "ios" | "android", version: string) =>
     request<AppVersionCheck>(`/onchurch/app/version?platform=${platform}&version=${encodeURIComponent(version)}`),
 }
