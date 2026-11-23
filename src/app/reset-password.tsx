@@ -1,6 +1,7 @@
 import { router } from "expo-router"
 import React, { useState } from "react"
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native"
+import { StyleSheet, Text, View } from "react-native"
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { PhoneVerify } from "@/components/phone-verify"
@@ -48,8 +49,12 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 28 }]} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 28 }]}
+      keyboardShouldPersistTaps="handled"
+      bottomOffset={24}
+    >
         <Text style={styles.intro}>아이디와 가입할 때 등록한 휴대전화를 확인한 뒤 새 비밀번호를 정합니다.</Text>
         <Field label="아이디" value={userId} onChangeText={setUserId} placeholder="아이디" autoComplete="username" textContentType="username" />
         <PhoneVerify onVerified={setPhone} />
@@ -70,8 +75,7 @@ export default function ResetPasswordScreen() {
         )}
         <ErrorNotice message={errorMessage} />
         <Button title="비밀번호 바꾸기" onPress={submit} disabled={!canSubmit} loading={submitting} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   )
 }
 

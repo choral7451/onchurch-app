@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ActivityIndicator, BackHandler, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native"
+import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { WebView, WebViewMessageEvent } from "react-native-webview"
 import type { ShouldStartLoadRequest, WebViewNavigation } from "react-native-webview/lib/WebViewTypes"
@@ -134,38 +135,41 @@ export function ChurchWebView({ session }: { session: Session }) {
     // Android 는 화면이 시스템 내비게이션 바 밑까지 그려져서, 웹의 아래쪽(메뉴 맨 아래 등)이 가려지지 않게 아래 여백을 둔다.
     // 둘러보는 중에는 아래의 안내 띠가 그 여백을 대신 채운다.
     <SafeAreaView style={styles.container} edges={Platform.OS === "android" && !guest ? ["top", "bottom"] : ["top"]}>
-      <WebView
-        ref={webView}
-        source={{ uri }}
-        originWhitelist={["*"]}
-        injectedJavaScriptBeforeContentLoaded={bridgeScript}
-        onMessage={onMessage}
-        onShouldStartLoadWithRequest={onShouldStartLoad}
-        onNavigationStateChange={(state: WebViewNavigation): void => {
-          canGoBack.current = state.canGoBack
-        }}
-        onLoadEnd={() => {
-          loaded.current = true
-        }}
-        onError={() => setFailed(true)}
-        sharedCookiesEnabled
-        thirdPartyCookiesEnabled
-        domStorageEnabled
-        // iOS 전용 값. Android 에 문자열로 넘기면 숫자(Double) prop 이라 화면을 만들다 앱이 종료된다 (String cannot be cast to Double)
-        {...(Platform.OS === "ios" ? { decelerationRate: "normal" as const } : null)}
-        allowsBackForwardNavigationGestures
-        allowsInlineMediaPlayback
-        allowsFullscreenVideo
-        pullToRefreshEnabled
-        setSupportMultipleWindows={false}
-        startInLoadingState
-        renderLoading={() => (
-          <View style={styles.loading}>
-            <ActivityIndicator color={colors.primary} />
-          </View>
-        )}
-        style={styles.webView}
-      />
+      {/* Android 는 edge-to-edge 라 키보드가 떠도 창이 줄지 않아 웹의 입력칸(댓글·글쓰기)이 가려진다 — 키보드 높이만큼 웹뷰를 줄인다. iOS 는 웹뷰가 알아서 올린다 */}
+      <KeyboardAvoidingView style={styles.webViewWrap} behavior="padding" enabled={Platform.OS === "android"}>
+        <WebView
+          ref={webView}
+          source={{ uri }}
+          originWhitelist={["*"]}
+          injectedJavaScriptBeforeContentLoaded={bridgeScript}
+          onMessage={onMessage}
+          onShouldStartLoadWithRequest={onShouldStartLoad}
+          onNavigationStateChange={(state: WebViewNavigation): void => {
+            canGoBack.current = state.canGoBack
+          }}
+          onLoadEnd={() => {
+            loaded.current = true
+          }}
+          onError={() => setFailed(true)}
+          sharedCookiesEnabled
+          thirdPartyCookiesEnabled
+          domStorageEnabled
+          // iOS 전용 값. Android 에 문자열로 넘기면 숫자(Double) prop 이라 화면을 만들다 앱이 종료된다 (String cannot be cast to Double)
+          {...(Platform.OS === "ios" ? { decelerationRate: "normal" as const } : null)}
+          allowsBackForwardNavigationGestures
+          allowsInlineMediaPlayback
+          allowsFullscreenVideo
+          pullToRefreshEnabled
+          setSupportMultipleWindows={false}
+          startInLoadingState
+          renderLoading={() => (
+            <View style={styles.loading}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          )}
+          style={styles.webView}
+        />
+      </KeyboardAvoidingView>
       {guest && (
         <SafeAreaView edges={["bottom"]} style={styles.guestBar}>
           <Text style={styles.guestText} numberOfLines={1}>
@@ -182,6 +186,7 @@ export function ChurchWebView({ session }: { session: Session }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
+  webViewWrap: { flex: 1 },
   webView: { flex: 1, backgroundColor: colors.surface },
   loading: { ...StyleSheet.absoluteFill, alignItems: "center", justifyContent: "center", backgroundColor: colors.surface },
   guestBar: {

@@ -1,6 +1,7 @@
 import { router } from "expo-router"
 import React, { useRef, useState } from "react"
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Pressable, StyleSheet, Text, View } from "react-native"
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { Button, ErrorNotice, Field, TextInputRef } from "@/components/ui"
@@ -33,8 +34,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" bounces={false}>
+    <KeyboardAwareScrollView style={styles.screen} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" bounces={false} bottomOffset={24}>
         <View style={[styles.masthead, { paddingTop: insets.top + 56 }]}>
           <View style={styles.cross} accessible={false}>
             <View style={styles.crossVertical} />
@@ -87,8 +87,7 @@ export default function LoginScreen() {
             <Text style={styles.browseText}>로그인 없이 교회 둘러보기</Text>
           </Pressable>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   )
 }
 

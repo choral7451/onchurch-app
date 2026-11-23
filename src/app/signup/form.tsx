@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from "expo-router"
 import React, { useState } from "react"
-import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native"
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { ChurchLogo } from "@/components/church-logo"
@@ -46,8 +47,13 @@ export default function SignupFormScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 28 }]} keyboardShouldPersistTaps="handled">
+    // 입력칸에 들어가면 그 칸이 키보드 위로 올라오도록 스크롤한다 (Android 는 edge-to-edge 라 창 크기가 줄지 않는다)
+    <KeyboardAwareScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 28 }]}
+      keyboardShouldPersistTaps="handled"
+      bottomOffset={24}
+    >
         <View style={styles.church}>
           <ChurchLogo name={church.name} logoUrl={church.logoUrl} size={44} />
           <View style={styles.churchBody}>
@@ -99,8 +105,7 @@ export default function SignupFormScreen() {
 
         <ErrorNotice message={errorMessage} />
         <Button title="가입하고 시작하기" onPress={submit} disabled={!canSubmit} loading={submitting} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   )
 }
 
