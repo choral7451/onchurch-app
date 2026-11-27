@@ -14,7 +14,7 @@ import { usePushNotifications } from "@/lib/use-push-notifications"
 SplashScreen.preventAutoHideAsync()
 
 /**
- * 첫 화면은 로그인. 로그인하면 그 계정의 교회 화면(index)만 남고, 로그아웃하면 다시 로그인 화면만 남는다.
+ * 첫 화면은 로그인. 로그인하면 그 계정의 대시보드(index)와 거기서 여는 화면(site·soon)만 남고, 로그아웃하면 다시 로그인 화면만 남는다.
  * 저장된 세션을 읽을 때까지는 스플래시를 유지한다.
  */
 function Screens() {
@@ -41,6 +41,8 @@ function Screens() {
     >
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="site" />
+        <Stack.Screen name="soon" />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         {/* 남색 머리 부분 위라서 상태바 글자를 밝게 */}

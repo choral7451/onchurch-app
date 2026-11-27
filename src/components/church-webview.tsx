@@ -8,7 +8,7 @@ import type { ShouldStartLoadRequest, WebViewNavigation } from "react-native-web
 import { Button } from "@/components/ui"
 import { colors } from "@/constants/theme"
 import { buildSiteBridgeScript, churchSiteUrl, isChurchHost, SiteMessage } from "@/lib/church-site"
-import { getPushStatus, PushStatus, subscribePushPath, syncPushToken, takePendingPushPath } from "@/lib/push"
+import { getPushStatus, PushStatus, syncPushToken } from "@/lib/push"
 import { Session, useSession } from "@/lib/session"
 
 const hostOf = (url: string): string | null => {
@@ -21,7 +21,8 @@ const hostOf = (url: string): string | null => {
  * 로그인 없이 둘러보는 중이면 아래에 로그인 안내 띠를 보여준다.
  * 교회 사이트 밖의 주소는 기기 브라우저로 열고, 웹에서 로그아웃하면 앱도 로그인 화면으로 돌아간다.
  */
-export function ChurchWebView({ session }: { session: Session }) {
+export function ChurchWebView({ session, path }: { session: Session; path?: string }) {
+  // 대시보드에서 연 화면이라 위에 앱 머리(뒤로 가기)가 있다 — 위쪽 안전 영역은 머리가 맡는다
   const { rememberTokens, signOut } = useSession()
   // react-native-webview 의 클래스 타입이 새 React Native 타입과 맞지 않아 any 로 둔다 (아트인포 앱과 동일)
   const webView = useRef<any>(null)
@@ -32,12 +33,8 @@ export function ChurchWebView({ session }: { session: Session }) {
 
   const { church } = session
   const siteUrl = churchSiteUrl(church)
-  // 알림을 탭해 앱이 켜졌으면 그 화면부터 연다
-  const [uri, setUri] = useState(() => {
-    const path = takePendingPushPath()
-    return path ? siteUrl + path : siteUrl
-  })
-  const loaded = useRef(false)
+  // 대시보드 버튼·알림이 정한 경로부터 연다 (같은 사이트 안의 경로만)
+  const uri = path && path.startsWith("/") && !path.startsWith("//") ? siteUrl + path : siteUrl
   // 웹뷰가 알려 준 최신 액세스 토큰 — 푸시 토큰 등록에 쓴다 (앱이 저장한 토큰은 만료됐을 수 있다)
   const accessToken = useRef<string | null>(null)
   const bridgeScript = useMemo(() => buildSiteBridgeScript(session.church, session.tokens), [session])
@@ -52,17 +49,6 @@ export function ChurchWebView({ session }: { session: Session }) {
     })
     return () => subscription.remove()
   }, [])
-
-  // 앱이 켜져 있을 때 알림을 탭함 — 보고 있던 화면에서 알림의 화면으로 이동
-  useEffect(
-    () =>
-      subscribePushPath(path => {
-        const target = siteUrl + path
-        if (loaded.current) webView.current?.injectJavaScript(`location.assign(${JSON.stringify(target)});true;`)
-        else setUri(target)
-      }),
-    [siteUrl],
-  )
 
   // 웹(마이페이지 알림 설정)에 이 기기의 알림 상태를 알려 준다
   const reportPushStatus = useCallback((status: PushStatus) => {
@@ -134,7 +120,7 @@ export function ChurchWebView({ session }: { session: Session }) {
   return (
     // Android 는 화면이 시스템 내비게이션 바 밑까지 그려져서, 웹의 아래쪽(메뉴 맨 아래 등)이 가려지지 않게 아래 여백을 둔다.
     // 둘러보는 중에는 아래의 안내 띠가 그 여백을 대신 채운다.
-    <SafeAreaView style={styles.container} edges={Platform.OS === "android" && !guest ? ["top", "bottom"] : ["top"]}>
+    <SafeAreaView style={styles.container} edges={Platform.OS === "android" && !guest ? ["bottom"] : []}>
       {/* Android 는 edge-to-edge 라 키보드가 떠도 창이 줄지 않아 웹의 입력칸(댓글·글쓰기)이 가려진다 — 키보드 높이만큼 웹뷰를 줄인다. iOS 는 웹뷰가 알아서 올린다 */}
       <KeyboardAvoidingView style={styles.webViewWrap} behavior="padding" enabled={Platform.OS === "android"}>
         <WebView
@@ -146,9 +132,6 @@ export function ChurchWebView({ session }: { session: Session }) {
           onShouldStartLoadWithRequest={onShouldStartLoad}
           onNavigationStateChange={(state: WebViewNavigation): void => {
             canGoBack.current = state.canGoBack
-          }}
-          onLoadEnd={() => {
-            loaded.current = true
           }}
           onError={() => setFailed(true)}
           sharedCookiesEnabled
